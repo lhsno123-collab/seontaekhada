@@ -3,13 +3,13 @@ import { Navigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
-/** 이메일 + 비밀번호 로그인. 한 번 로그인하면 세션이 브라우저에 남아 계속 유지된다. */
-export default function Login() {
+export default function Signup() {
   const { user, loading } = useAuth();
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [signing, setSigning] = useState(false);
+  const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const from = (location.state as { from?: string } | null)?.from ?? "/";
@@ -19,7 +19,7 @@ export default function Login() {
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!email.trim() || !password || signing) return;
+    if (!email.trim() || password.length < 6 || signing) return;
 
     if (!isSupabaseConfigured) {
       setError("Supabase 연결 정보가 없습니다. .env 파일을 채워주세요.");
@@ -29,28 +29,49 @@ export default function Login() {
     setSigning(true);
     setError(null);
 
-    const { error: signInError } = await supabase.auth.signInWithPassword({
+    const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
     });
 
     setSigning(false);
 
-    if (signInError) {
+    if (signUpError) {
       setError(
-        /invalid login credentials/i.test(signInError.message)
-          ? "이메일 또는 비밀번호가 올바르지 않습니다."
-          : signInError.message
+        /already registered|user already exists/i.test(signUpError.message)
+          ? "이미 가입된 이메일입니다. 로그인해 주세요."
+          : signUpError.message
       );
+      return;
     }
+
+    // Supabase 프로젝트에서 이메일 확인을 꺼두었다면 가입과 동시에 세션이 생겨 바로 로그인된다.
+    if (data.session) {
+      window.location.assign(from);
+      return;
+    }
+
+    setDone(true);
+  }
+
+  if (done) {
+    return (
+      <div className="mx-auto max-w-content px-6 py-24 md:py-32">
+        <h1 className="mb-4 text-3xl font-semibold">가입이 거의 끝났습니다</h1>
+        <p className="text-muted">
+          받은 메일함에서 확인 링크를 한 번 눌러야 합니다. 이후에는 이메일과
+          비밀번호로 바로 로그인할 수 있습니다.
+        </p>
+      </div>
+    );
   }
 
   return (
     <div className="mx-auto max-w-content px-6 py-24 md:py-32">
       <h1 className="text-3xl md:text-4xl font-semibold leading-tight tracking-tight mb-3">
-        로그인
+        회원가입
       </h1>
-      <p className="text-muted mb-12">한 번 로그인하면 계속 유지됩니다.</p>
+      <p className="text-muted mb-12">이메일과 비밀번호로 한 번만 가입하면 됩니다.</p>
 
       <form onSubmit={handleSubmit} className="max-w-sm space-y-8">
         <label className="block">
@@ -67,13 +88,16 @@ export default function Login() {
         </label>
 
         <label className="block">
-          <span className="mb-3 block text-xs tracking-wide text-muted">비밀번호</span>
+          <span className="mb-3 block text-xs tracking-wide text-muted">
+            비밀번호 (6자 이상)
+          </span>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            autoComplete="current-password"
+            minLength={6}
+            autoComplete="new-password"
             placeholder="••••••••"
             className="w-full border-b border-line bg-transparent pb-3 text-lg outline-none transition-colors focus:border-ink"
           />
@@ -83,17 +107,17 @@ export default function Login() {
 
         <button
           type="submit"
-          disabled={signing || !email.trim() || !password}
+          disabled={signing || !email.trim() || password.length < 6}
           className="rounded-full bg-ink px-8 py-3 text-sm text-white transition-opacity disabled:opacity-30"
         >
-          {signing ? "로그인 중…" : "로그인"}
+          {signing ? "가입 중…" : "회원가입"}
         </button>
       </form>
 
       <p className="mt-10 text-sm text-muted">
-        계정이 없으신가요?{" "}
-        <Link to="/signup" state={{ from }} className="text-ink underline underline-offset-4">
-          회원가입
+        이미 계정이 있으신가요?{" "}
+        <Link to="/login" state={{ from }} className="text-ink underline underline-offset-4">
+          로그인
         </Link>
       </p>
     </div>

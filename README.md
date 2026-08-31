@@ -4,7 +4,7 @@
 
 - **미니멀 · 흰 바탕**: 한 화면에 주제 하나. 장식 없음.
 - **고르면 바로 집계**: 보기를 누르면 그 카드 안에서 막대가 차오르고, %와 참여 인원이 실시간으로 갱신됩니다.
-- **1인 1표**: 로그인(이메일 매직 링크) 후 투표. 선택은 언제든 바꿀 수 있습니다.
+- **1인 1표**: 이메일·비밀번호로 로그인 후 투표. 한 번 고르면 바꿀 수 없습니다.
 
 ## 대메뉴
 
@@ -35,8 +35,10 @@ npm run dev            # http://localhost:8080
 1. [supabase.com](https://supabase.com) 에서 프로젝트를 만듭니다.
 2. **SQL Editor** 에서 `supabase/migrations/001_init.sql` 을 실행합니다.
    (첫 주제를 바로 띄우려면 `002_seed_example.sql` 도 실행)
-3. `003_admin.sql` 을 실행합니다 (관리자 화면용).
-4. **Authentication → Providers → Email** 에서 매직 링크를 켭니다.
+3. `003_admin.sql`, `004_lock_votes.sql` 을 순서대로 실행합니다.
+4. **Authentication → Providers → Email** 이 켜져 있는지 확인합니다 (기본값이 켜짐).
+   가입하자마자 바로 로그인되게 하려면 같은 화면의 **Confirm email** 을 꺼두세요.
+   켜두면 가입 후 메일의 확인 링크를 한 번 눌러야 합니다.
 5. **Project Settings → API** 의 URL과 anon key 를 `.env` 에 넣습니다.
 
 ```
@@ -76,7 +78,7 @@ Redirect URLs 에 그 주소를 넣어야 로그인 링크가 제대로 돌아�
 | --- | --- |
 | `polls` | 주제. `status='open'` 인 주제는 항상 **하나만** (부분 유니크 인덱스로 강제) |
 | `poll_options` | 보기 |
-| `votes` | 표. `(poll_id, user_id)` 기본키로 1인 1표를 DB가 보장 |
+| `votes` | 표. `(poll_id, user_id)` 기본키로 1인 1표, UPDATE 정책 없음으로 변경 금지를 DB가 보장 |
 | `poll_option_counts` | 집계 캐시. 트리거로 유지하고 Realtime 으로 방송 |
 | `topic_suggestions` | 주제추천 |
 | `ads` | 오늘의 광고판 |

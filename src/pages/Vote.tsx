@@ -60,7 +60,7 @@ export default function Vote() {
               percent={percent}
               selected={myOptionId === option.id}
               revealed={revealed}
-              disabled={voting}
+              disabled={voting || revealed}
               onSelect={() => handleSelect(option.id)}
             />
           );
@@ -72,7 +72,7 @@ export default function Vote() {
           지금까지 <strong className="font-semibold text-ink">{total.toLocaleString()}명</strong>이 선택했습니다
         </span>
         {revealed ? (
-          <span>다시 눌러 선택을 바꿀 수 있습니다</span>
+          <span>선택을 완료했습니다 · 다시 바꿀 수 없습니다</span>
         ) : (
           <span>
             {user || !isSupabaseConfigured

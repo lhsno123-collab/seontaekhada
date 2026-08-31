@@ -7,6 +7,7 @@ import Vote from "@/pages/Vote";
 import Suggest from "@/pages/Suggest";
 import Board from "@/pages/Board";
 import Login from "@/pages/Login";
+import Signup from "@/pages/Signup";
 import Admin from "@/pages/Admin";
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
                 <Route path="/suggest" element={<Suggest />} />
                 <Route path="/board" element={<Board />} />
                 <Route path="/login" element={<Login />} />
+                <Route path="/signup" element={<Signup />} />
                 <Route path="/admin" element={<Admin />} />
                 <Route path="*" element={<Vote />} />
               </Routes>

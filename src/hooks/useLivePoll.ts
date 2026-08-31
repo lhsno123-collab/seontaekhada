@@ -149,25 +149,18 @@ export function useLivePoll(userId: string | null): LivePoll {
     };
   }, [poll]);
 
-  // ── 투표 ────────────────────────────────────────────────
+  // ── 투표 (한 번 하면 바꿀 수 없다) ─────────────────────────
   const vote = useCallback(
     async (optionId: string) => {
       const pollId = pollIdRef.current;
       if (!pollId || voting) return;
+      if (myOptionId !== null) return; // 이미 투표함 — 다시 누를 수 없다
       if (!userId && isSupabaseConfigured) return;
-
-      const previous = myOptionId;
-      if (previous === optionId) return;
 
       // 낙관적 갱신 — 실시간 방송이 오기 전에도 바로 반응하게
       setVoting(true);
       setMyOptionId(optionId);
-      setCounts((prev) => {
-        const next = { ...prev };
-        next[optionId] = (next[optionId] ?? 0) + 1;
-        if (previous) next[previous] = Math.max(0, (next[previous] ?? 1) - 1);
-        return next;
-      });
+      setCounts((prev) => ({ ...prev, [optionId]: (prev[optionId] ?? 0) + 1 }));
 
       if (!isSupabaseConfigured) {
         setVoting(false);
@@ -176,23 +169,22 @@ export function useLivePoll(userId: string | null): LivePoll {
 
       const { error: voteError } = await supabase
         .from("votes")
-        .upsert(
-          { poll_id: pollId, user_id: userId!, option_id: optionId, updated_at: new Date().toISOString() },
-          { onConflict: "poll_id,user_id" }
-        );
+        .insert({ poll_id: pollId, user_id: userId!, option_id: optionId });
 
       setVoting(false);
 
       if (voteError) {
-        // 실패하면 되돌린다
-        setMyOptionId(previous);
-        setCounts((prev) => {
-          const next = { ...prev };
-          next[optionId] = Math.max(0, (next[optionId] ?? 1) - 1);
-          if (previous) next[previous] = (next[previous] ?? 0) + 1;
-          return next;
-        });
-        setError(describeError(voteError.message));
+        // 실패하면 되돌린다 (동시에 다른 탭에서 먼저 투표한 경우 등)
+        setMyOptionId(null);
+        setCounts((prev) => ({
+          ...prev,
+          [optionId]: Math.max(0, (prev[optionId] ?? 1) - 1),
+        }));
+        setError(
+          /duplicate key|unique constraint/i.test(voteError.message)
+            ? "이미 이 주제에 투표하셨습니다."
+            : describeError(voteError.message)
+        );
       }
     },
     [userId, myOptionId, voting]
