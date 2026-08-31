@@ -2,6 +2,7 @@ import { useCallback, useEffect, useRef, useState } from "react";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 import type { OptionCount, Poll, PollOption } from "@/lib/types";
 import { DEMO_COUNTS, DEMO_OPTIONS, DEMO_POLL } from "@/lib/demo";
+import { describeError } from "@/lib/errors";
 
 export interface LivePoll {
   poll: Poll | null;
@@ -63,7 +64,7 @@ export function useLivePoll(userId: string | null): LivePoll {
 
       if (cancelled) return;
       if (pollError) {
-        setError(pollError.message);
+        setError(describeError(pollError.message));
         setLoading(false);
         return;
       }
@@ -108,7 +109,14 @@ export function useLivePoll(userId: string | null): LivePoll {
       if (!cancelled) setLoading(false);
     }
 
-    load();
+    // 네트워크 자체가 실패하면 promise 가 거부된다.
+    // 잡아주지 않으면 loading 이 영원히 true 로 남아 '불러오는 중…' 에서 멈춘다.
+    load().catch((thrown) => {
+      if (cancelled) return;
+      setError(describeError(thrown));
+      setLoading(false);
+    });
+
     return () => {
       cancelled = true;
     };
@@ -184,7 +192,7 @@ export function useLivePoll(userId: string | null): LivePoll {
           if (previous) next[previous] = (next[previous] ?? 0) + 1;
           return next;
         });
-        setError(voteError.message);
+        setError(describeError(voteError.message));
       }
     },
     [userId, myOptionId, voting]

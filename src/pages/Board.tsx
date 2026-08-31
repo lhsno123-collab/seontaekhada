@@ -13,15 +13,21 @@ export default function Board() {
     }
 
     let cancelled = false;
-    supabase
-      .from("ads")
-      .select("id, title, body, link_url, image_url, position")
-      .order("position", { ascending: true })
-      .then(({ data }) => {
-        if (cancelled) return;
-        setAds((data ?? []) as Ad[]);
-        setLoading(false);
-      });
+
+    async function load() {
+      try {
+        const { data } = await supabase
+          .from("ads")
+          .select("id, title, body, link_url, image_url, position")
+          .order("position", { ascending: true });
+        if (!cancelled) setAds((data ?? []) as Ad[]);
+      } finally {
+        // 요청이 실패해도 '불러오는 중…' 에 머물지 않게 한다
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    void load();
 
     return () => {
       cancelled = true;

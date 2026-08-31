@@ -39,12 +39,27 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       setLoading(false);
     });
 
-    supabase.auth.getSession().then(({ data }) => {
-      setSession(data.session);
-      setLoading(false);
-    });
+    // Supabase 가 응답하지 않으면 getSession 이 끝나지 않아 화면이 '불러오는 중…' 에
+    // 갇힌다. 세션을 못 읽어도 비로그인 상태로 화면은 보여줘야 한다.
+    const giveUp = setTimeout(() => setLoading(false), 6000);
 
-    return () => sub.subscription.unsubscribe();
+    supabase.auth
+      .getSession()
+      .then(({ data }) => {
+        setSession(data.session);
+      })
+      .catch(() => {
+        // 연결 실패. 비로그인으로 계속 진행한다.
+      })
+      .finally(() => {
+        clearTimeout(giveUp);
+        setLoading(false);
+      });
+
+    return () => {
+      clearTimeout(giveUp);
+      sub.subscription.unsubscribe();
+    };
   }, []);
 
   const value = useMemo<AuthValue>(
