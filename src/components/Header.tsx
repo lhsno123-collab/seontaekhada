@@ -1,5 +1,6 @@
 import { NavLink, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
+import { useIsAdmin } from "@/hooks/useIsAdmin";
 
 const MENU = [
   { to: "/", label: "선택하다 투표하기", end: true },
@@ -9,6 +10,7 @@ const MENU = [
 
 export default function Header() {
   const { user, signOut } = useAuth();
+  const { isAdmin } = useIsAdmin();
 
   return (
     <header className="border-b border-line bg-white/90 backdrop-blur sticky top-0 z-10">
@@ -17,21 +19,28 @@ export default function Header() {
           <Link to="/" className="text-lg tracking-[0.2em] font-semibold">
             선택하다
           </Link>
-          {user ? (
-            <button
-              onClick={signOut}
-              className="text-xs text-muted hover:text-ink transition-colors"
-            >
-              로그아웃
-            </button>
-          ) : (
-            <Link
-              to="/login"
-              className="text-xs text-muted hover:text-ink transition-colors"
-            >
-              로그인
-            </Link>
-          )}
+          <div className="flex items-center gap-5">
+            {isAdmin && (
+              <Link to="/admin" className="text-xs text-muted transition-colors hover:text-ink">
+                관리자
+              </Link>
+            )}
+            {user ? (
+              <button
+                onClick={signOut}
+                className="text-xs text-muted transition-colors hover:text-ink"
+              >
+                로그아웃
+              </button>
+            ) : (
+              <Link
+                to="/login"
+                className="text-xs text-muted transition-colors hover:text-ink"
+              >
+                로그인
+              </Link>
+            )}
+          </div>
         </div>
 
         <nav className="flex gap-8 -mb-px">
