@@ -3,6 +3,7 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useLivePoll } from "@/hooks/useLivePoll";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import OptionCard from "@/components/OptionCard";
+import ShareActions from "@/components/ShareActions";
 
 export default function Vote() {
   const { user, loading: authLoading } = useAuth();
@@ -81,6 +82,23 @@ export default function Vote() {
           </span>
         )}
       </div>
+
+      {revealed && (
+        <ShareActions
+          question={poll.question}
+          subtitle={poll.subtitle}
+          total={total}
+          options={options.map((option) => {
+            const votes = counts[option.id] ?? 0;
+            return {
+              label: option.label,
+              votes,
+              percent: total > 0 ? (votes / total) * 100 : 0,
+              selected: myOptionId === option.id,
+            };
+          })}
+        />
+      )}
     </div>
   );
 }
