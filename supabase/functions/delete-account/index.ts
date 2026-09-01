@@ -5,11 +5,18 @@
 // auth.users를 지우면 votes / topic_suggestions / admins가 전부 ON DELETE CASCADE로
 // 함께 삭제되므로(001_init.sql, 003_admin.sql) 이 함수 하나로 탈퇴가 끝난다.
 //
-// 배포: supabase functions deploy delete-account
+// Supabase 대시보드 Edge Functions 화면에서 파일 하나만 붙여넣어 배포할 수 있도록
+// cors 헤더를 여기 안에 그대로 넣어뒀다(다른 파일을 import하지 않는다).
 // SUPABASE_URL / SUPABASE_SERVICE_ROLE_KEY는 Supabase가 모든 Edge Function에 자동으로 주입한다.
 
 import { createClient } from "npm:@supabase/supabase-js@2";
-import { corsHeaders } from "../_shared/cors.ts";
+
+const corsHeaders = {
+  "Access-Control-Allow-Origin": "*",
+  "Access-Control-Allow-Headers": "authorization, x-client-info, apikey, content-type",
+  "Access-Control-Allow-Methods": "POST, OPTIONS",
+  "Access-Control-Max-Age": "86400",
+};
 
 const SUPABASE_URL = Deno.env.get("SUPABASE_URL")!;
 const SUPABASE_ANON_KEY = Deno.env.get("SUPABASE_ANON_KEY")!;
