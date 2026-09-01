@@ -1,0 +1,7 @@
+User-agent: *
+Allow: /
+Disallow: /admin
+Disallow: /account
+Disallow: /reset-password
+
+Sitemap: https://seontaekhada-i6on.vercel.app/sitemap.xml

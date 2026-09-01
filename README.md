@@ -88,6 +88,37 @@ anon key로는 사용자 계정을 지울 수 없어서, 탈퇴는 Supabase Edge
 https://<배포된 도메인>/**
 ```
 
+## 검색엔진 노출 (Google / 네이버)
+
+`index.html`에 og:image, 구조화 데이터(JSON-LD)를 넣었고 `public/robots.txt`,
+`public/sitemap.xml`도 만들어뒀습니다. 다만 **도메인을 커스텀 도메인으로 바꾸면
+이 파일들 안의 주소(`seontaekhada-i6on.vercel.app`)를 전부 새 도메인으로
+바꿔야** 정상 작동합니다 (`index.html`, `public/robots.txt`, `public/sitemap.xml`
+세 곳).
+
+등록은 각 검색엔진 도구에 직접 하셔야 합니다 (코드로는 할 수 없는 부분):
+
+**Google Search Console**
+1. [search.google.com/search-console](https://search.google.com/search-console) 접속
+2. 속성 추가 → URL 접두어 방식으로 사이트 주소 입력
+3. 소유확인은 "HTML 태그" 방식 추천 (`index.html`의 `<head>`에 한 줄 추가하고 재배포)
+4. **Sitemaps** 메뉴에서 `sitemap.xml` 제출
+5. **URL 검사** 도구로 메인 페이지 색인 생성 요청 (수동으로 요청하면 훨씬 빨리 잡힙니다)
+
+**네이버 서치어드바이저**
+1. [searchadvisor.naver.com](https://searchadvisor.naver.com) 접속
+2. 사이트 등록 → 소유확인(HTML 태그 방식)
+3. **요청 → 사이트맵 제출**에 `sitemap.xml` 등록
+4. **요청 → 웹페이지 수집**에서 메인 URL 수집 요청
+
+⚠️ 중요: **"선택하다"라는 검색어 자체는 흔한 한국어 단어**라 그 단어 하나로
+1페이지에 뜨기는 매우 어렵습니다(사전적 의미, 다른 서비스와 경쟁). 대신
+"오늘의 투표 사이트", "실시간 여론조사 사이트", "밸런스게임 투표" 같은
+구체적인 문구(롱테일 키워드)를 노려야 실제로 검색 유입이 생깁니다. 또한
+네이버는 자기 생태계(블로그·카페) 안에 링크가 퍼져 있을수록 신생 사이트를
+더 빨리 인식하는 경향이 있어서, 아래 마케팅에서 네이버 블로그/카페에 올리는
+것 자체가 검색 노출에도 같이 도움이 됩니다.
+
 ## 카카오톡 공유 (선택 사항)
 
 `VITE_KAKAO_JS_KEY` 를 안 넣으면 "카카오톡 공유" 버튼이 자동으로 숨고, "이미지로
