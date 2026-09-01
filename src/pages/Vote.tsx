@@ -42,7 +42,7 @@ export default function Vote() {
     <div className="mx-auto max-w-content px-6 py-16 md:py-24">
       <p className="text-xs tracking-[0.25em] text-muted mb-6">오늘의 주제</p>
 
-      <h1 className="text-3xl md:text-[2.75rem] font-semibold leading-[1.3] tracking-tight mb-4">
+      <h1 className="text-3xl md:text-[2.75rem] font-semibold leading-[1.35] mb-4">
         {poll.question}
       </h1>
       {poll.subtitle && <p className="text-muted mb-10">{poll.subtitle}</p>}

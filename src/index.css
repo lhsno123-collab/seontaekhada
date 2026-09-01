@@ -2,6 +2,27 @@
 @tailwind components;
 @tailwind utilities;
 
+/* Pretendard — 실제 사용하는 굵기 3종만 넣는다. CDN 대신 직접 배포해
+   외부 서비스 장애와 무관하게 항상 뜨도록 한다. */
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 400;
+  font-display: swap;
+  src: url("/fonts/Pretendard-Regular.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 500;
+  font-display: swap;
+  src: url("/fonts/Pretendard-Medium.woff2") format("woff2");
+}
+@font-face {
+  font-family: "Pretendard";
+  font-weight: 600;
+  font-display: swap;
+  src: url("/fonts/Pretendard-SemiBold.woff2") format("woff2");
+}
+
 @layer base {
   html {
     -webkit-tap-highlight-color: transparent;

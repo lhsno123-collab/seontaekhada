@@ -9,7 +9,7 @@ interface OptionCardProps {
 }
 
 /**
- * 투표 전에는 큰 빈 카드, 투표 후에는 같은 카드 안에서 막대가 차오른다.
+ * 투표 전에는 부드러운 채움 배경의 빈 카드, 투표 후에는 같은 카드 안에서 막대가 차오른다.
  * 카드가 바뀌지 않고 상태만 변해서 화면이 튀지 않는다.
  */
 export default function OptionCard({
@@ -28,10 +28,13 @@ export default function OptionCard({
       disabled={disabled}
       aria-pressed={selected}
       className={[
-        "group relative w-full overflow-hidden rounded-2xl border text-left transition-all",
+        "group relative w-full overflow-hidden rounded-[28px] text-left transition-all duration-200",
         "px-7 py-6 md:px-8 md:py-7",
-        selected ? "border-ink" : "border-line hover:border-ink/40",
-        disabled ? "cursor-default" : "cursor-pointer active:scale-[0.995]",
+        "shadow-[0_1px_2px_rgba(17,17,17,0.04)]",
+        selected
+          ? "bg-ink/[0.06] ring-1 ring-inset ring-ink/15"
+          : "bg-neutral-50 ring-1 ring-inset ring-black/[0.03] hover:bg-neutral-100",
+        disabled ? "cursor-default" : "cursor-pointer active:scale-[0.99]",
       ].join(" ")}
     >
       {/* 집계 막대 */}
@@ -39,7 +42,7 @@ export default function OptionCard({
         aria-hidden
         className={[
           "absolute inset-y-0 left-0 transition-all duration-700 ease-out",
-          selected ? "bg-ink/[0.09]" : "bg-ink/[0.04]",
+          selected ? "bg-ink/[0.08]" : "bg-ink/[0.05]",
         ].join(" ")}
         style={{ width: revealed ? `${percent}%` : "0%" }}
       />
@@ -48,7 +51,9 @@ export default function OptionCard({
         <span className="text-xl md:text-2xl font-medium leading-snug">
           {label}
           {selected && (
-            <span className="ml-2 align-middle text-[11px] text-muted">내 선택</span>
+            <span className="ml-2 align-middle text-[11px] font-normal text-muted">
+              내 선택
+            </span>
           )}
         </span>
 
