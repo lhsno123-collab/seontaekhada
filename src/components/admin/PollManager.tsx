@@ -81,7 +81,11 @@ export default function PollManager({ onError }: { onError: (message: string) =>
     <div className="space-y-16">
       {/* ── 새 주제 ── */}
       <section>
-        <h2 className="mb-6 text-sm tracking-wide text-muted">새 주제 만들기</h2>
+        <h2 className="mb-2 text-sm tracking-wide text-muted">새 주제 만들기</h2>
+        <p className="mb-6 text-xs text-muted">
+          특정 후보자·정당·선거에 관한 주제는 공직선거법상 별도 신고 대상이 될 수 있어
+          피해주세요. 일반 사회 이슈는 규제 대상이 아닙니다.
+        </p>
         <form onSubmit={handleCreate} className="space-y-6">
           <input
             value={question}

@@ -81,13 +81,18 @@ export default function Login() {
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
-        <button
-          type="submit"
-          disabled={signing || !email.trim() || !password}
-          className="rounded-full bg-ink px-8 py-3 text-sm text-white transition-opacity disabled:opacity-30"
-        >
-          {signing ? "로그인 중…" : "로그인"}
-        </button>
+        <div className="flex items-center gap-6">
+          <button
+            type="submit"
+            disabled={signing || !email.trim() || !password}
+            className="rounded-full bg-ink px-8 py-3 text-sm text-white transition-opacity disabled:opacity-30"
+          >
+            {signing ? "로그인 중…" : "로그인"}
+          </button>
+          <Link to="/forgot-password" className="text-xs text-muted hover:text-ink">
+            비밀번호를 잊으셨나요?
+          </Link>
+        </div>
       </form>
 
       <p className="mt-10 text-sm text-muted">

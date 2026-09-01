@@ -3,23 +3,29 @@ import { Navigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
 
+const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+
 export default function Signup() {
   const { user, loading } = useAuth();
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [passwordCheck, setPasswordCheck] = useState("");
   const [signing, setSigning] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const from = (location.state as { from?: string } | null)?.from ?? "/";
 
+  const passwordValid = PASSWORD_RULE.test(password);
+  const passwordMatches = password.length > 0 && password === passwordCheck;
+
   if (loading) return null;
   if (user) return <Navigate to={from} replace />;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!email.trim() || password.length < 6 || signing) return;
+    if (!email.trim() || !passwordValid || !passwordMatches || signing) return;
 
     if (!isSupabaseConfigured) {
       setError("Supabase 연결 정보가 없습니다. .env 파일을 채워주세요.");
@@ -89,25 +95,47 @@ export default function Signup() {
 
         <label className="block">
           <span className="mb-3 block text-xs tracking-wide text-muted">
-            비밀번호 (6자 이상)
+            비밀번호 (8자 이상, 영문+숫자 포함)
           </span>
           <input
             type="password"
             value={password}
             onChange={(e) => setPassword(e.target.value)}
             required
-            minLength={6}
             autoComplete="new-password"
             placeholder="••••••••"
             className="w-full border-b border-line bg-transparent pb-3 text-lg outline-none transition-colors focus:border-ink"
           />
+          {password.length > 0 && !passwordValid && (
+            <span className="mt-2 block text-xs text-red-600">
+              영문과 숫자를 함께 넣어 8자 이상으로 만들어주세요.
+            </span>
+          )}
+        </label>
+
+        <label className="block">
+          <span className="mb-3 block text-xs tracking-wide text-muted">비밀번호 확인</span>
+          <input
+            type="password"
+            value={passwordCheck}
+            onChange={(e) => setPasswordCheck(e.target.value)}
+            required
+            autoComplete="new-password"
+            placeholder="••••••••"
+            className="w-full border-b border-line bg-transparent pb-3 text-lg outline-none transition-colors focus:border-ink"
+          />
+          {passwordCheck.length > 0 && !passwordMatches && (
+            <span className="mt-2 block text-xs text-red-600">
+              비밀번호가 서로 다릅니다.
+            </span>
+          )}
         </label>
 
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
           type="submit"
-          disabled={signing || !email.trim() || password.length < 6}
+          disabled={signing || !email.trim() || !passwordValid || !passwordMatches}
           className="rounded-full bg-ink px-8 py-3 text-sm text-white transition-opacity disabled:opacity-30"
         >
           {signing ? "가입 중…" : "회원가입"}

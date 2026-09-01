@@ -26,12 +26,20 @@ export default function Header() {
               </Link>
             )}
             {user ? (
-              <button
-                onClick={signOut}
-                className="text-xs text-muted transition-colors hover:text-ink"
-              >
-                로그아웃
-              </button>
+              <>
+                <Link
+                  to="/account"
+                  className="text-xs text-muted transition-colors hover:text-ink"
+                >
+                  계정
+                </Link>
+                <button
+                  onClick={signOut}
+                  className="text-xs text-muted transition-colors hover:text-ink"
+                >
+                  로그아웃
+                </button>
+              </>
             ) : (
               <Link
                 to="/login"
