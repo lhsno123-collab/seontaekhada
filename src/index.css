@@ -35,3 +35,12 @@
     @apply bg-ink text-white;
   }
 }
+
+/* 좁은 화면에서 가로 스크롤이 필요한 곳(헤더 탭)의 스크롤바를 숨긴다 */
+.no-scrollbar {
+  scrollbar-width: none;
+  -ms-overflow-style: none;
+}
+.no-scrollbar::-webkit-scrollbar {
+  display: none;
+}

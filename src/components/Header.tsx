@@ -64,25 +64,33 @@ export default function Header() {
           </div>
         </div>
 
-        <nav className="flex gap-8 -mb-px">
-          {MENU.map((item) => (
-            <NavLink
-              key={item.to}
-              to={item.to}
-              end={item.end}
-              className={({ isActive }) =>
-                [
-                  "pb-4 text-sm transition-colors border-b-2",
-                  isActive
-                    ? "border-ink text-ink"
-                    : "border-transparent text-muted hover:text-ink",
-                ].join(" ")
-              }
-            >
-              {item.label}
-            </NavLink>
-          ))}
-        </nav>
+        {/* 좁은 화면에서는 줄바꿈 대신 가로 스크롤 — 탭이 두 줄로 깨지는 것을 막는다.
+            오른쪽을 흐리게 해서 더 스크롤할 게 있다는 걸 알려준다(잘린 것처럼 보이지 않게). */}
+        <div className="relative">
+          <nav className="no-scrollbar flex gap-6 overflow-x-auto -mb-px sm:gap-8">
+            {MENU.map((item) => (
+              <NavLink
+                key={item.to}
+                to={item.to}
+                end={item.end}
+                className={({ isActive }) =>
+                  [
+                    "shrink-0 whitespace-nowrap pb-4 text-sm transition-colors border-b-2",
+                    isActive
+                      ? "border-ink text-ink"
+                      : "border-transparent text-muted hover:text-ink",
+                  ].join(" ")
+                }
+              >
+                {item.label}
+              </NavLink>
+            ))}
+          </nav>
+          <div
+            aria-hidden
+            className="pointer-events-none absolute inset-y-0 right-0 w-10 bg-gradient-to-l from-white to-transparent sm:hidden"
+          />
+        </div>
       </div>
     </header>
   );

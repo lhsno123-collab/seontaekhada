@@ -47,13 +47,11 @@ export default function OptionCard({
         style={{ width: revealed ? `${percent}%` : "0%" }}
       />
 
-      <span className="relative flex items-baseline justify-between gap-4">
-        <span className="text-xl md:text-2xl font-medium leading-snug">
-          {label}
+      <span className="relative flex flex-wrap items-start justify-between gap-x-4 gap-y-1">
+        <span className="min-w-0">
+          <span className="block text-xl md:text-2xl font-medium leading-snug">{label}</span>
           {selected && (
-            <span className="ml-2 align-middle text-[11px] font-normal text-muted">
-              내 선택
-            </span>
+            <span className="mt-0.5 block text-[11px] text-muted">내 선택</span>
           )}
         </span>
 

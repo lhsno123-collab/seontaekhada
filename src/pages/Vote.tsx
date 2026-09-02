@@ -68,7 +68,7 @@ export default function Vote() {
         })}
       </div>
 
-      <div className="mt-8 flex items-center justify-between text-xs text-muted">
+      <div className="mt-8 flex flex-col gap-1.5 text-xs text-muted sm:flex-row sm:items-center sm:justify-between sm:gap-4">
         <span className="tabular-nums">
           지금까지 <strong className="font-semibold text-ink">{total.toLocaleString()}명</strong>이 선택했습니다
         </span>

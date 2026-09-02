@@ -94,8 +94,11 @@ export default function WelcomePopup() {
           <p className="mb-8 text-sm leading-relaxed text-muted">{content.body}</p>
         )}
 
-        <div className="flex items-center justify-between">
-          <button onClick={dismissForToday} className="text-xs text-muted hover:text-ink">
+        <div className="flex flex-col-reverse gap-3 sm:flex-row sm:items-center sm:justify-between">
+          <button
+            onClick={dismissForToday}
+            className="text-xs text-muted hover:text-ink sm:shrink-0"
+          >
             오늘 하루 보지 않기
           </button>
           <button
@@ -104,7 +107,7 @@ export default function WelcomePopup() {
               if (isExternal) window.open(content.linkTo, "_blank", "noopener,noreferrer");
               else navigate(content.linkTo);
             }}
-            className="rounded-full bg-ink px-6 py-2.5 text-sm text-white"
+            className="shrink-0 rounded-full bg-ink px-6 py-2.5 text-center text-sm text-white sm:ml-4"
           >
             {content.linkLabel}
           </button>
