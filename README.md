@@ -49,6 +49,12 @@ VITE_SUPABASE_URL=https://xxxx.supabase.co
 VITE_SUPABASE_ANON_KEY=eyJhbGciOi...
 ```
 
+## 예약 발행
+
+`/admin` 주제 등록 폼의 "예약 발행"에 시간을 넣으면, 그 시간에 자동으로 열립니다
+(지금 진행 중인 주제는 자동으로 마감됨). pg_cron이 5분 간격으로 확인합니다.
+`005_scheduled_polls.sql`로 이미 DB에 반영돼 있어 추가로 하실 일은 없습니다.
+
 ## 관리자 등록
 
 관리자는 `admins` 테이블에 행이 있는 사용자입니다. 사이트에서 **한 번 로그인해 계정을

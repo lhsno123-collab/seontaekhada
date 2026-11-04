@@ -56,7 +56,7 @@ export function useLivePoll(userId: string | null): LivePoll {
 
       const { data: openPoll, error: pollError } = await supabase
         .from("polls")
-        .select("id, question, subtitle, status, opens_at, closes_at")
+        .select("id, question, subtitle, status, opens_at, closes_at, scheduled_open_at")
         .eq("status", "open")
         .order("opens_at", { ascending: false })
         .limit(1)

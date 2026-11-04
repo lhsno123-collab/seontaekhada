@@ -7,6 +7,7 @@ export interface Poll {
   status: PollStatus;
   opens_at: string;
   closes_at: string | null;
+  scheduled_open_at: string | null;
 }
 
 export interface PollOption {

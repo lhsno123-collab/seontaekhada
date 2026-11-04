@@ -11,6 +11,7 @@ export const DEMO_POLL: Poll = {
   status: "open",
   opens_at: new Date().toISOString(),
   closes_at: null,
+  scheduled_open_at: null,
 };
 
 export const DEMO_OPTIONS: PollOption[] = [

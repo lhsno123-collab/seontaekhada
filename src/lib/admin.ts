@@ -11,7 +11,7 @@ export interface AdminPoll extends Poll {
 export async function fetchAllPolls(): Promise<AdminPoll[]> {
   const { data: polls, error } = await supabase
     .from("polls")
-    .select("id, question, subtitle, status, opens_at, closes_at, created_at")
+    .select("id, question, subtitle, status, opens_at, closes_at, scheduled_open_at, created_at")
     .order("created_at", { ascending: false });
 
   if (error) throw new Error(error.message);
@@ -54,10 +54,17 @@ export async function createPoll(input: {
   question: string;
   subtitle: string | null;
   options: string[];
+  /** 지정하면 이 시각에 cron이 자동으로 연다(run_scheduled_polls, 5분 간격). */
+  scheduledOpenAt?: string | null;
 }): Promise<string> {
   const { data: poll, error } = await supabase
     .from("polls")
-    .insert({ question: input.question, subtitle: input.subtitle, status: "draft" })
+    .insert({
+      question: input.question,
+      subtitle: input.subtitle,
+      status: "draft",
+      scheduled_open_at: input.scheduledOpenAt ?? null,
+    })
     .select("id")
     .single();
 
@@ -95,5 +102,14 @@ export async function closePoll(pollId: string): Promise<void> {
 
 export async function deletePoll(pollId: string): Promise<void> {
   const { error } = await supabase.from("polls").delete().eq("id", pollId);
+  if (error) throw new Error(error.message);
+}
+
+/** 예약을 취소하고 그냥 수동 초안으로 되돌린다. */
+export async function cancelSchedule(pollId: string): Promise<void> {
+  const { error } = await supabase
+    .from("polls")
+    .update({ scheduled_open_at: null })
+    .eq("id", pollId);
   if (error) throw new Error(error.message);
 }

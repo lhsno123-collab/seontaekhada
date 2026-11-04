@@ -5,6 +5,7 @@ import {
   openPoll,
   closePoll,
   deletePoll,
+  cancelSchedule,
   type AdminPoll,
 } from "@/lib/admin";
 
@@ -14,6 +15,15 @@ const STATUS_LABEL: Record<string, string> = {
   closed: "마감",
 };
 
+function formatSchedule(iso: string): string {
+  return new Date(iso).toLocaleString("ko-KR", {
+    month: "long",
+    day: "numeric",
+    hour: "2-digit",
+    minute: "2-digit",
+  });
+}
+
 export default function PollManager({ onError }: { onError: (message: string) => void }) {
   const [polls, setPolls] = useState<AdminPoll[]>([]);
   const [loading, setLoading] = useState(true);
@@ -22,6 +32,7 @@ export default function PollManager({ onError }: { onError: (message: string) =>
   const [question, setQuestion] = useState("");
   const [subtitle, setSubtitle] = useState("");
   const [optionsText, setOptionsText] = useState("");
+  const [scheduledOpenAt, setScheduledOpenAt] = useState("");
   const [saving, setSaving] = useState(false);
 
   const reload = useCallback(async () => {
@@ -53,10 +64,12 @@ export default function PollManager({ onError }: { onError: (message: string) =>
         question: question.trim(),
         subtitle: subtitle.trim() || null,
         options: parsedOptions,
+        scheduledOpenAt: scheduledOpenAt ? new Date(scheduledOpenAt).toISOString() : null,
       });
       setQuestion("");
       setSubtitle("");
       setOptionsText("");
+      setScheduledOpenAt("");
       await reload();
     } catch (error) {
       onError((error as Error).message);
@@ -108,6 +121,18 @@ export default function PollManager({ onError }: { onError: (message: string) =>
             placeholder={"보기를 한 줄에 하나씩\n찬성\n반대"}
             className="w-full resize-none border-b border-line bg-transparent pb-3 outline-none transition-colors focus:border-ink"
           />
+          <label className="block">
+            <span className="mb-2 block text-xs text-muted">
+              예약 발행 (선택 사항 — 비워두면 "이 주제 열기"를 직접 눌러야 합니다)
+            </span>
+            <input
+              type="datetime-local"
+              value={scheduledOpenAt}
+              onChange={(e) => setScheduledOpenAt(e.target.value)}
+              min={new Date().toISOString().slice(0, 16)}
+              className="border-b border-line bg-transparent pb-2 text-sm outline-none transition-colors focus:border-ink"
+            />
+          </label>
           <div className="flex items-center gap-4">
             <button
               type="submit"
@@ -137,6 +162,7 @@ export default function PollManager({ onError }: { onError: (message: string) =>
         <div className="space-y-3">
           {polls.map((poll) => {
             const busy = busyId === poll.id;
+            const scheduled = poll.status === "draft" && !!poll.scheduled_open_at;
             return (
               <article key={poll.id} className="rounded-2xl border border-line px-6 py-5">
                 <div className="mb-3 flex items-start justify-between gap-4">
@@ -145,6 +171,7 @@ export default function PollManager({ onError }: { onError: (message: string) =>
                     <p className="mt-1 text-xs text-muted">
                       {STATUS_LABEL[poll.status] ?? poll.status} · 총{" "}
                       {poll.total.toLocaleString()}명 참여
+                      {scheduled && ` · ${formatSchedule(poll.scheduled_open_at!)}에 자동 발행`}
                     </p>
                   </div>
                   <span
@@ -152,10 +179,12 @@ export default function PollManager({ onError }: { onError: (message: string) =>
                       "shrink-0 rounded-full px-3 py-1 text-[11px]",
                       poll.status === "open"
                         ? "bg-ink text-white"
-                        : "border border-line text-muted",
+                        : scheduled
+                          ? "border border-ink/30 text-ink"
+                          : "border border-line text-muted",
                     ].join(" ")}
                   >
-                    {STATUS_LABEL[poll.status] ?? poll.status}
+                    {scheduled ? "예약됨" : STATUS_LABEL[poll.status] ?? poll.status}
                   </span>
                 </div>
 
@@ -179,7 +208,7 @@ export default function PollManager({ onError }: { onError: (message: string) =>
                       disabled={busy}
                       className="rounded-full bg-ink px-4 py-1.5 text-white disabled:opacity-30"
                     >
-                      이 주제 열기
+                      지금 바로 열기
                     </button>
                   )}
                   {poll.status === "open" && (
@@ -189,6 +218,15 @@ export default function PollManager({ onError }: { onError: (message: string) =>
                       className="rounded-full border border-line px-4 py-1.5 disabled:opacity-30"
                     >
                       마감하기
+                    </button>
+                  )}
+                  {scheduled && (
+                    <button
+                      onClick={() => runOn(poll.id, () => cancelSchedule(poll.id))}
+                      disabled={busy}
+                      className="rounded-full border border-line px-4 py-1.5 text-muted disabled:opacity-30"
+                    >
+                      예약 취소
                     </button>
                   )}
                   {poll.total === 0 && (
@@ -207,7 +245,8 @@ export default function PollManager({ onError }: { onError: (message: string) =>
 
                 {poll.status !== "open" && polls.some((p) => p.status === "open") && (
                   <p className="mt-3 text-[11px] text-muted">
-                    이 주제를 열면 지금 진행 중인 주제는 자동으로 마감됩니다.
+                    {scheduled ? "예약 시간이 되면" : "이 주제를 열면"} 지금 진행 중인 주제는
+                    자동으로 마감됩니다.
                   </p>
                 )}
               </article>
