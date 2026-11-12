@@ -3,8 +3,7 @@ import { Navigate, useNavigate } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase } from "@/lib/supabase";
 import { changePassword, deleteAccount, reauthenticate } from "@/lib/account";
-
-const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+import { PASSWORD_RULE, PASSWORD_HINT } from "@/lib/password";
 
 export default function Account() {
   const { user, loading } = useAuth();
@@ -23,6 +22,10 @@ export default function Account() {
 
   if (loading) return null;
   if (!user) return <Navigate to="/login" state={{ from: "/account" }} replace />;
+
+  // 구글/카카오로만 가입한 계정은 비밀번호가 없다 — 재인증에 쓸 비밀번호 자체가 없으므로
+  // 비밀번호 변경 섹션을 숨기고, 탈퇴도 비밀번호 재확인 없이 바로 진행한다.
+  const hasPassword = user.identities?.some((identity) => identity.provider === "email") ?? true;
 
   async function handleChangePassword(event: FormEvent) {
     event.preventDefault();
@@ -49,13 +52,15 @@ export default function Account() {
 
   async function handleDelete(event: FormEvent) {
     event.preventDefault();
-    if (deleting || !deletePassword) return;
+    if (deleting || (hasPassword && !deletePassword)) return;
 
     setDeleting(true);
     setDeleteError(null);
 
     try {
-      await reauthenticate(user!.email!, deletePassword);
+      if (hasPassword) {
+        await reauthenticate(user!.email!, deletePassword);
+      }
       await deleteAccount();
       await supabase.auth.signOut();
       navigate("/", { replace: true });
@@ -74,43 +79,48 @@ export default function Account() {
       {/* ── 비밀번호 변경 ── */}
       <section className="mb-20">
         <h2 className="mb-6 text-sm tracking-wide text-muted">비밀번호 변경</h2>
-        <form onSubmit={handleChangePassword} className="max-w-sm space-y-6">
-          <label className="block">
-            <span className="mb-2 block text-xs text-muted">현재 비밀번호</span>
-            <input
-              type="password"
-              value={currentPassword}
-              onChange={(e) => setCurrentPassword(e.target.value)}
-              required
-              autoComplete="current-password"
-              className="w-full border-b border-line bg-transparent pb-3 outline-none transition-colors focus:border-ink"
-            />
-          </label>
-          <label className="block">
-            <span className="mb-2 block text-xs text-muted">
-              새 비밀번호 (8자 이상, 영문+숫자 포함)
-            </span>
-            <input
-              type="password"
-              value={newPassword}
-              onChange={(e) => setNewPassword(e.target.value)}
-              required
-              autoComplete="new-password"
-              className="w-full border-b border-line bg-transparent pb-3 outline-none transition-colors focus:border-ink"
-            />
-          </label>
 
-          {changeError && <p className="text-sm text-red-600">{changeError}</p>}
-          {changed && <p className="text-sm text-muted">비밀번호를 바꿨습니다.</p>}
+        {!hasPassword ? (
+          <p className="max-w-sm text-sm text-muted">
+            구글 또는 카카오로 로그인한 계정이라 비밀번호가 없습니다.
+          </p>
+        ) : (
+          <form onSubmit={handleChangePassword} className="max-w-sm space-y-6">
+            <label className="block">
+              <span className="mb-2 block text-xs text-muted">현재 비밀번호</span>
+              <input
+                type="password"
+                value={currentPassword}
+                onChange={(e) => setCurrentPassword(e.target.value)}
+                required
+                autoComplete="current-password"
+                className="w-full border-b border-line bg-transparent pb-3 outline-none transition-colors focus:border-ink"
+              />
+            </label>
+            <label className="block">
+              <span className="mb-2 block text-xs text-muted">새 비밀번호 ({PASSWORD_HINT})</span>
+              <input
+                type="password"
+                value={newPassword}
+                onChange={(e) => setNewPassword(e.target.value)}
+                required
+                autoComplete="new-password"
+                className="w-full border-b border-line bg-transparent pb-3 outline-none transition-colors focus:border-ink"
+              />
+            </label>
 
-          <button
-            type="submit"
-            disabled={changing || !currentPassword || !PASSWORD_RULE.test(newPassword)}
-            className="rounded-full bg-ink px-7 py-2.5 text-sm text-white transition-opacity disabled:opacity-30"
-          >
-            {changing ? "바꾸는 중…" : "비밀번호 바꾸기"}
-          </button>
-        </form>
+            {changeError && <p className="text-sm text-red-600">{changeError}</p>}
+            {changed && <p className="text-sm text-muted">비밀번호를 바꿨습니다.</p>}
+
+            <button
+              type="submit"
+              disabled={changing || !currentPassword || !PASSWORD_RULE.test(newPassword)}
+              className="rounded-full bg-ink px-7 py-2.5 text-sm text-white transition-opacity disabled:opacity-30"
+            >
+              {changing ? "바꾸는 중…" : "비밀번호 바꾸기"}
+            </button>
+          </form>
+        )}
       </section>
 
       {/* ── 회원 탈퇴 ── */}
@@ -134,26 +144,30 @@ export default function Account() {
         {deleteStep === "confirming" && (
           <form onSubmit={handleDelete} className="max-w-sm space-y-6">
             <p className="text-sm text-muted">
-              계속하려면 비밀번호를 입력해 본인 확인을 해주세요. 이 작업은 되돌릴 수 없습니다.
+              {hasPassword
+                ? "계속하려면 비밀번호를 입력해 본인 확인을 해주세요. 이 작업은 되돌릴 수 없습니다."
+                : "정말 탈퇴하시겠어요? 이 작업은 되돌릴 수 없습니다."}
             </p>
-            <label className="block">
-              <span className="mb-2 block text-xs text-muted">비밀번호</span>
-              <input
-                type="password"
-                value={deletePassword}
-                onChange={(e) => setDeletePassword(e.target.value)}
-                required
-                autoComplete="current-password"
-                className="w-full border-b border-line bg-transparent pb-3 outline-none transition-colors focus:border-ink"
-              />
-            </label>
+            {hasPassword && (
+              <label className="block">
+                <span className="mb-2 block text-xs text-muted">비밀번호</span>
+                <input
+                  type="password"
+                  value={deletePassword}
+                  onChange={(e) => setDeletePassword(e.target.value)}
+                  required
+                  autoComplete="current-password"
+                  className="w-full border-b border-line bg-transparent pb-3 outline-none transition-colors focus:border-ink"
+                />
+              </label>
+            )}
 
             {deleteError && <p className="text-sm text-red-600">{deleteError}</p>}
 
             <div className="flex gap-3">
               <button
                 type="submit"
-                disabled={deleting || !deletePassword}
+                disabled={deleting || (hasPassword && !deletePassword)}
                 className="rounded-full bg-red-600 px-7 py-2.5 text-sm text-white transition-opacity disabled:opacity-30"
               >
                 {deleting ? "탈퇴 처리 중…" : "정말 탈퇴합니다"}

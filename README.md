@@ -4,7 +4,9 @@
 
 - **미니멀 · 흰 바탕**: 한 화면에 주제 하나. 장식 없음.
 - **고르면 바로 집계**: 보기를 누르면 그 카드 안에서 막대가 차오르고, %와 참여 인원이 실시간으로 갱신됩니다.
-- **1인 1표**: 이메일·비밀번호로 로그인 후 투표. 한 번 고르면 바꿀 수 없습니다.
+- **1인 1표**: 이메일·비밀번호 또는 구글/카카오 로그인 후 투표. 한 번 고르면 바꿀 수 없습니다.
+- **가입 시 연령대 수집**: 신념(정치적 성향)은 별도 동의가 있을 때만 수집합니다(민감정보).
+- **매크로 방지**: 가입/로그인/비밀번호 재설정에 캡차(Cloudflare Turnstile)를 걸 수 있습니다.
 - **결과 공유**: 투표하면 결과를 이미지로 저장하거나, 카카오톡으로 공유하거나, 링크를 복사할 수 있습니다.
 - **실시간 접속자 수**: 지금 사이트를 열어둔 사람 수를 헤더에 표시합니다.
 
@@ -83,6 +85,54 @@ anon key로는 사용자 계정을 지울 수 없어서, 탈퇴는 Supabase Edge
 이 함수는 별도 secret 등록 없이 동작합니다 (`SUPABASE_URL`, `SUPABASE_SERVICE_ROLE_KEY`,
 `SUPABASE_ANON_KEY`는 Supabase가 모든 Edge Function에 자동으로 넣어줍니다).
 배포하지 않으면 `/account` 화면의 "탈퇴하기"를 눌러도 오류가 납니다.
+
+## 구글/카카오 소셜 로그인 (선택 사항)
+
+설정 안 해도 이메일/비밀번호 로그인은 그대로 됩니다. 버튼은 항상 보이지만,
+Supabase에서 그 제공자를 켜두지 않으면 눌렀을 때 오류가 납니다.
+
+**구글**
+1. [Google Cloud Console](https://console.cloud.google.com) → 프로젝트 생성 →
+   **API 및 서비스 → OAuth 동의 화면** 설정 (외부, 테스트 중이어도 동작함)
+2. **사용자 인증 정보 → OAuth 클라이언트 ID 만들기** (웹 애플리케이션)
+3. **승인된 리디렉션 URI**에 아래 주소를 정확히 등록:
+   ```
+   https://rklndpotkxicdsbkhcto.supabase.co/auth/v1/callback
+   ```
+4. 발급된 **클라이언트 ID**와 **클라이언트 보안 비밀**을 복사
+5. Supabase 대시보드 → **Authentication → Providers → Google** → Enable →
+   클라이언트 ID/보안 비밀 붙여넣고 저장
+
+**카카오**
+1. [Kakao Developers](https://developers.kakao.com) → 애플리케이션 추가
+2. **제품 설정 → 카카오 로그인** 활성화
+3. **Redirect URI**에 위와 동일한 콜백 주소 등록:
+   ```
+   https://rklndpotkxicdsbkhcto.supabase.co/auth/v1/callback
+   ```
+4. **보안 → Client Secret** 발급 (활성화 상태로)
+5. **앱 키 → REST API 키**와 방금 만든 **Client Secret**을 복사
+6. Supabase 대시보드 → **Authentication → Providers → Kakao** → Enable →
+   REST API 키를 Client ID 칸에, Client Secret을 그대로 붙여넣고 저장
+
+## 매크로(자동 가입) 방지 — Cloudflare Turnstile (선택 사항)
+
+`VITE_TURNSTILE_SITE_KEY` 를 안 넣으면 위젯 자체가 안 뜨고, 가입·로그인도 그냥
+됩니다(보호 없음). 켜려면:
+
+1. [Cloudflare 대시보드](https://dash.cloudflare.com) → **Turnstile** → **사이트 추가**
+2. 도메인에 배포된 주소 입력, 위젯 모드는 **Managed** 추천
+3. 발급된 **Site Key**와 **Secret Key** 복사
+4. Vercel **Environment Variables** 에 추가:
+   ```
+   VITE_TURNSTILE_SITE_KEY=발급받은 Site Key
+   ```
+5. Supabase 대시보드 → **Authentication → Attack Protection**(또는 Settings 내
+   CAPTCHA 항목) → **Enable CAPTCHA protection** → Turnstile 선택 → **Secret Key** 붙여넣기
+
+⚠️ 5번을 켜는 순간 로그인·가입·비밀번호 재설정 전부에 캡차가 필수가 됩니다 —
+그래서 세 화면 모두에 위젯을 넣어뒀습니다. 4번만 하고 5번을 안 하면 위젯만
+보이고 실제로는 아직 강제되지 않습니다.
 
 ## 비밀번호 재설정 링크가 되려면
 
@@ -169,6 +219,7 @@ Redirect URLs 에 그 주소를 넣어야 로그인 링크가 제대로 돌아�
 | `topic_suggestions` | 주제추천 |
 | `ads` | 오늘의 광고판 |
 | `admins` | 관리자 계정 |
+| `profiles` | 연령대, 신념(동의한 경우만). 구글/카카오로 가입해 프로필이 없으면 첫 로그인 때 한 번 물어봄 |
 
 ## 법적 근거
 

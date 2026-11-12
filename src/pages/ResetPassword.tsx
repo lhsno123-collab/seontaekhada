@@ -2,8 +2,7 @@ import { useEffect, useState, type FormEvent } from "react";
 import { useNavigate } from "react-router-dom";
 import { supabase } from "@/lib/supabase";
 import { changePassword } from "@/lib/account";
-
-const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+import { PASSWORD_RULE, PASSWORD_HINT } from "@/lib/password";
 
 /**
  * 메일의 재설정 링크를 누르면 이 화면으로 온다. Supabase가 URL의 토큰을
@@ -60,7 +59,7 @@ export default function ResetPassword() {
       <h1 className="mb-3 text-3xl font-semibold tracking-tight md:text-4xl">
         새 비밀번호 설정
       </h1>
-      <p className="mb-12 text-muted">8자 이상, 영문과 숫자를 함께 넣어주세요.</p>
+      <p className="mb-12 text-muted">{PASSWORD_HINT}.</p>
 
       <form onSubmit={handleSubmit} className="max-w-sm space-y-8">
         <label className="block">

@@ -2,8 +2,12 @@ import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
-
-const PASSWORD_RULE = /^(?=.*[A-Za-z])(?=.*\d).{8,}$/;
+import { PASSWORD_RULE, PASSWORD_HINT } from "@/lib/password";
+import { saveProfile } from "@/lib/profile";
+import type { AgeGroup, PoliticalStance } from "@/lib/types";
+import OAuthButtons from "@/components/OAuthButtons";
+import ProfileFields from "@/components/ProfileFields";
+import Turnstile, { isTurnstileConfigured } from "@/components/Turnstile";
 
 export default function Signup() {
   const { user, loading } = useAuth();
@@ -11,6 +15,12 @@ export default function Signup() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [passwordCheck, setPasswordCheck] = useState("");
+
+  const [ageGroup, setAgeGroup] = useState<AgeGroup | "">("");
+  const [consented, setConsented] = useState(false);
+  const [politicalStance, setPoliticalStance] = useState<PoliticalStance | "">("");
+
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
   const [done, setDone] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -19,13 +29,16 @@ export default function Signup() {
 
   const passwordValid = PASSWORD_RULE.test(password);
   const passwordMatches = password.length > 0 && password === passwordCheck;
+  const profileValid = !!ageGroup && (!consented || !!politicalStance);
+  const captchaReady = !isTurnstileConfigured || !!captchaToken;
 
   if (loading) return null;
   if (user) return <Navigate to={from} replace />;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!email.trim() || !passwordValid || !passwordMatches || signing) return;
+    if (!email.trim() || !passwordValid || !passwordMatches || !profileValid || !captchaReady || signing)
+      return;
 
     if (!isSupabaseConfigured) {
       setError("Supabase 연결 정보가 없습니다. .env 파일을 채워주세요.");
@@ -38,11 +51,11 @@ export default function Signup() {
     const { data, error: signUpError } = await supabase.auth.signUp({
       email: email.trim(),
       password,
+      options: captchaToken ? { captchaToken } : undefined,
     });
 
-    setSigning(false);
-
     if (signUpError) {
+      setSigning(false);
       setError(
         /already registered|user already exists/i.test(signUpError.message)
           ? "이미 가입된 이메일입니다. 로그인해 주세요."
@@ -52,11 +65,23 @@ export default function Signup() {
     }
 
     // Supabase 프로젝트에서 이메일 확인을 꺼두었다면 가입과 동시에 세션이 생겨 바로 로그인된다.
+    // 세션이 있어야 RLS를 통과해 프로필을 저장할 수 있다 — 확인 메일을 눌러야 하는
+    // 경우엔 여기서 저장하지 못하고, 나중에 로그인했을 때 ProfileGate가 다시 물어본다.
     if (data.session) {
+      try {
+        await saveProfile(data.session.user.id, {
+          ageGroup: ageGroup as AgeGroup,
+          politicalStance: politicalStance || null,
+          consentedToStance: consented && !!politicalStance,
+        });
+      } catch {
+        // 프로필 저장 실패는 가입 자체를 막지 않는다 — ProfileGate가 다음에 다시 물어본다.
+      }
       window.location.assign(from);
       return;
     }
 
+    setSigning(false);
     setDone(true);
   }
 
@@ -79,6 +104,16 @@ export default function Signup() {
       </h1>
       <p className="text-muted mb-12">이메일과 비밀번호로 한 번만 가입하면 됩니다.</p>
 
+      <div className="max-w-sm">
+        <OAuthButtons redirectTo={from} />
+
+        <div className="my-8 flex items-center gap-4 text-xs text-muted">
+          <span className="h-px flex-1 bg-line" />
+          또는
+          <span className="h-px flex-1 bg-line" />
+        </div>
+      </div>
+
       <form onSubmit={handleSubmit} className="max-w-sm space-y-8">
         <label className="block">
           <span className="mb-3 block text-xs tracking-wide text-muted">이메일</span>
@@ -95,7 +130,7 @@ export default function Signup() {
 
         <label className="block">
           <span className="mb-3 block text-xs tracking-wide text-muted">
-            비밀번호 (8자 이상, 영문+숫자 포함)
+            비밀번호 ({PASSWORD_HINT})
           </span>
           <input
             type="password"
@@ -108,7 +143,7 @@ export default function Signup() {
           />
           {password.length > 0 && !passwordValid && (
             <span className="mt-2 block text-xs text-red-600">
-              영문과 숫자를 함께 넣어 8자 이상으로 만들어주세요.
+              영문 대/소문자·숫자·특수문자를 모두 넣어 8자 이상으로 만들어주세요.
             </span>
           )}
         </label>
@@ -131,11 +166,24 @@ export default function Signup() {
           )}
         </label>
 
+        <ProfileFields
+          ageGroup={ageGroup}
+          onAgeGroupChange={setAgeGroup}
+          consented={consented}
+          onConsentedChange={setConsented}
+          politicalStance={politicalStance}
+          onPoliticalStanceChange={setPoliticalStance}
+        />
+
+        <Turnstile onToken={setCaptchaToken} />
+
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <button
           type="submit"
-          disabled={signing || !email.trim() || !passwordValid || !passwordMatches}
+          disabled={
+            signing || !email.trim() || !passwordValid || !passwordMatches || !profileValid || !captchaReady
+          }
           className="rounded-full bg-ink px-8 py-3 text-sm text-white transition-opacity disabled:opacity-30"
         >
           {signing ? "가입 중…" : "회원가입"}

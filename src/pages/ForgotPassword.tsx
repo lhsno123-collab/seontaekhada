@@ -2,16 +2,20 @@ import { useState, type FormEvent } from "react";
 import { Link } from "react-router-dom";
 import { isSupabaseConfigured } from "@/lib/supabase";
 import { requestPasswordReset } from "@/lib/account";
+import Turnstile, { isTurnstileConfigured } from "@/components/Turnstile";
 
 export default function ForgotPassword() {
   const [email, setEmail] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [sending, setSending] = useState(false);
   const [sent, setSent] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
+  const captchaReady = !isTurnstileConfigured || !!captchaToken;
+
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!email.trim() || sending) return;
+    if (!email.trim() || !captchaReady || sending) return;
 
     if (!isSupabaseConfigured) {
       setError("Supabase 연결 정보가 없습니다. .env 파일을 채워주세요.");
@@ -22,7 +26,7 @@ export default function ForgotPassword() {
     setError(null);
 
     try {
-      await requestPasswordReset(email.trim());
+      await requestPasswordReset(email.trim(), captchaToken);
       setSent(true);
     } catch (err) {
       setError((err as Error).message);
@@ -60,9 +64,11 @@ export default function ForgotPassword() {
 
           {error && <p className="text-sm text-red-600">{error}</p>}
 
+          <Turnstile onToken={setCaptchaToken} />
+
           <button
             type="submit"
-            disabled={sending || !email.trim()}
+            disabled={sending || !email.trim() || !captchaReady}
             className="rounded-full bg-ink px-8 py-3 text-sm text-white transition-opacity disabled:opacity-30"
           >
             {sending ? "보내는 중…" : "재설정 링크 받기"}

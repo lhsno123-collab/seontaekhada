@@ -2,6 +2,8 @@ import { useState, type FormEvent } from "react";
 import { Navigate, useLocation, Link } from "react-router-dom";
 import { useAuth } from "@/contexts/AuthContext";
 import { supabase, isSupabaseConfigured } from "@/lib/supabase";
+import OAuthButtons from "@/components/OAuthButtons";
+import Turnstile, { isTurnstileConfigured } from "@/components/Turnstile";
 
 /** 이메일 + 비밀번호 로그인. 한 번 로그인하면 세션이 브라우저에 남아 계속 유지된다. */
 export default function Login() {
@@ -9,17 +11,19 @@ export default function Login() {
   const location = useLocation();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [captchaToken, setCaptchaToken] = useState<string | null>(null);
   const [signing, setSigning] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
   const from = (location.state as { from?: string } | null)?.from ?? "/";
+  const captchaReady = !isTurnstileConfigured || !!captchaToken;
 
   if (loading) return null;
   if (user) return <Navigate to={from} replace />;
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
-    if (!email.trim() || !password || signing) return;
+    if (!email.trim() || !password || !captchaReady || signing) return;
 
     if (!isSupabaseConfigured) {
       setError("Supabase 연결 정보가 없습니다. .env 파일을 채워주세요.");
@@ -32,6 +36,7 @@ export default function Login() {
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email: email.trim(),
       password,
+      options: captchaToken ? { captchaToken } : undefined,
     });
 
     setSigning(false);
@@ -51,6 +56,16 @@ export default function Login() {
         로그인
       </h1>
       <p className="text-muted mb-12">한 번 로그인하면 계속 유지됩니다.</p>
+
+      <div className="max-w-sm">
+        <OAuthButtons redirectTo={from} />
+
+        <div className="my-8 flex items-center gap-4 text-xs text-muted">
+          <span className="h-px flex-1 bg-line" />
+          또는
+          <span className="h-px flex-1 bg-line" />
+        </div>
+      </div>
 
       <form onSubmit={handleSubmit} className="max-w-sm space-y-8">
         <label className="block">
@@ -79,12 +94,14 @@ export default function Login() {
           />
         </label>
 
+        <Turnstile onToken={setCaptchaToken} />
+
         {error && <p className="text-sm text-red-600">{error}</p>}
 
         <div className="flex items-center gap-6">
           <button
             type="submit"
-            disabled={signing || !email.trim() || !password}
+            disabled={signing || !email.trim() || !password || !captchaReady}
             className="rounded-full bg-ink px-8 py-3 text-sm text-white transition-opacity disabled:opacity-30"
           >
             {signing ? "로그인 중…" : "로그인"}

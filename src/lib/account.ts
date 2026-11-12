@@ -17,9 +17,10 @@ export async function changePassword(newPassword: string): Promise<void> {
   if (error) throw new Error(error.message);
 }
 
-export async function requestPasswordReset(email: string): Promise<void> {
+export async function requestPasswordReset(email: string, captchaToken?: string | null): Promise<void> {
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${window.location.origin}/reset-password`,
+    ...(captchaToken ? { captchaToken } : {}),
   });
   if (error) throw new Error(error.message);
 }

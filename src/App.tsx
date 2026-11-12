@@ -4,6 +4,7 @@ import Header from "@/components/Header";
 import ErrorBoundary from "@/components/ErrorBoundary";
 import ConfigBanner from "@/components/ConfigBanner";
 import WelcomePopup from "@/components/WelcomePopup";
+import ProfileGate from "@/components/ProfileGate";
 import Vote from "@/pages/Vote";
 import Suggest from "@/pages/Suggest";
 import Board from "@/pages/Board";
@@ -25,20 +26,22 @@ export default function App() {
           <Header />
           <main>
             <ErrorBoundary>
-              <Routes>
-                <Route path="/" element={<Vote />} />
-                <Route path="/suggest" element={<Suggest />} />
-                <Route path="/board" element={<Board />} />
-                <Route path="/login" element={<Login />} />
-                <Route path="/signup" element={<Signup />} />
-                <Route path="/forgot-password" element={<ForgotPassword />} />
-                <Route path="/reset-password" element={<ResetPassword />} />
-                <Route path="/account" element={<Account />} />
-                <Route path="/admin" element={<Admin />} />
-                <Route path="/terms" element={<Terms />} />
-                <Route path="/privacy" element={<Privacy />} />
-                <Route path="*" element={<Vote />} />
-              </Routes>
+              <ProfileGate>
+                <Routes>
+                  <Route path="/" element={<Vote />} />
+                  <Route path="/suggest" element={<Suggest />} />
+                  <Route path="/board" element={<Board />} />
+                  <Route path="/login" element={<Login />} />
+                  <Route path="/signup" element={<Signup />} />
+                  <Route path="/forgot-password" element={<ForgotPassword />} />
+                  <Route path="/reset-password" element={<ResetPassword />} />
+                  <Route path="/account" element={<Account />} />
+                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/terms" element={<Terms />} />
+                  <Route path="/privacy" element={<Privacy />} />
+                  <Route path="*" element={<Vote />} />
+                </Routes>
+              </ProfileGate>
             </ErrorBoundary>
           </main>
           <footer className="border-t border-line">

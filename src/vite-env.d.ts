@@ -5,6 +5,8 @@ interface ImportMetaEnv {
   readonly VITE_SUPABASE_ANON_KEY: string;
   /** 선택 사항. 없으면 카카오톡 공유 버튼이 자동으로 숨는다. */
   readonly VITE_KAKAO_JS_KEY?: string;
+  /** 선택 사항. 없으면 매크로 방지(캡차) 위젯이 안 뜨고 검증도 요구하지 않는다. */
+  readonly VITE_TURNSTILE_SITE_KEY?: string;
 }
 
 interface ImportMeta {

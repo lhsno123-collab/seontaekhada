@@ -31,3 +31,15 @@ export interface Ad {
   image_url: string | null;
   position: number;
 }
+
+export const AGE_GROUPS = ["10대", "20대", "30대", "40대", "50대"] as const;
+export type AgeGroup = (typeof AGE_GROUPS)[number];
+
+export const POLITICAL_STANCES = ["중도", "보수", "진보", "해당없음"] as const;
+export type PoliticalStance = (typeof POLITICAL_STANCES)[number];
+
+export interface Profile {
+  user_id: string;
+  age_group: AgeGroup | null;
+  political_stance: PoliticalStance | null;
+}
